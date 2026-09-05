@@ -835,7 +835,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupMenuBar() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = NSImage(
-            systemSymbolName: "character.book.closed",
+            systemSymbolName: "book.closed.fill",
             accessibilityDescription: "MacDict"
         )
 
@@ -945,6 +945,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct MacDictApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    var body: some Scene {
+        Settings {
+            SettingsView(model: AppModel.shared)
+                .frame(width: 520, height: 430)
+        }
+    }
+}
+elegate.self) private var appDelegate
 
     var body: some Scene {
         Settings {
