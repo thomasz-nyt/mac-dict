@@ -49,7 +49,7 @@ The installer downloads a pinned 65.9 MB CSV, verifies its SHA-256 checksum, and
 ~/Library/Application Support/MacDict/ecdict.sqlite3
 ```
 
-MacDict detects the database on the next lookup. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing dictionary data.
+MacDict detects the database on the next lookup. The downloadable app is only a few hundred kilobytes because it uses macOS system frameworks, retrieves uncached English entries online, and does not bundle this optional database. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing dictionary data.
 
 ## Accessibility permission
 
