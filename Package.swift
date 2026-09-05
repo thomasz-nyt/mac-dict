@@ -30,7 +30,7 @@ let package = Package(
         .testTarget(
             name: "MacDictCoreTests",
             dependencies: ["MacDictCore"],
-            resources: [.copy("Fixtures")]
+            resources: [.process("Fixtures")]
         )
     ],
     swiftLanguageVersions: [.v5]
