@@ -162,7 +162,9 @@ public actor DictionaryAPIClient {
         guard let query = QueryNormalizer.normalize(rawQuery) else {
             throw DictionaryAPIError.invalidQuery
         }
-        guard let escaped = query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+        var pathComponentCharacters = CharacterSet.urlPathAllowed
+        pathComponentCharacters.remove(charactersIn: "/?#")
+        guard let escaped = query.addingPercentEncoding(withAllowedCharacters: pathComponentCharacters),
               let url = URL(string: "https://api.dictionaryapi.dev/api/v2/entries/en/\(escaped)") else {
             throw DictionaryAPIError.invalidQuery
         }
@@ -526,7 +528,9 @@ public actor LookupCoordinator {
         guard let query = QueryNormalizer.normalize(rawQuery) else { return nil }
         async let english = cache.entry(for: query)
         async let chinese = ecdict.lookup(query)
-        let result = await LookupResult(query: query, english: english, chinese: chinese)
+        let cachedEntry = await english
+        let hint = await chinese
+        let result = LookupResult(query: query, english: cachedEntry, chinese: hint)
         return result.english == nil && result.chinese == nil ? nil : result
     }
 
@@ -538,7 +542,7 @@ public actor LookupCoordinator {
         async let cachedEnglish = cache.entry(for: query)
         async let chinese = ecdict.lookup(query)
         if let cached = await cachedEnglish {
-            return await LookupResult(query: query, english: cached, chinese: chinese)
+            return LookupResult(query: query, english: cached, chinese: await chinese)
         }
 
         async let english = api.lookup(query)
@@ -556,10 +560,6 @@ public actor LookupCoordinator {
     }
 
     public func suggestions(for prefix: String) async -> [String] {
-        await ecdict.suggestions(for: prefix)
-    }
-}
--> [String] {
         await ecdict.suggestions(for: prefix)
     }
 }
