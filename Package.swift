@@ -12,11 +12,7 @@ let package = Package(
     ],
     targets: [
         .systemLibrary(
-            name: "CSQLite",
-            pkgConfig: "sqlite3",
-            providers: [
-                .brew(["sqlite3"])
-            ]
+            name: "CSQLite"
         ),
         .target(
             name: "MacDictCore",
