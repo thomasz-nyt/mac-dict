@@ -718,9 +718,9 @@ struct ResultView: View {
                 HStack(spacing: 6) {
                     Text("English data:")
                     if let source = entry.sourceURLs.first {
-                        Link("Wiktionary via Free Dictionary API", destination: source)
+                        Link(entry.sourceName, destination: source)
                     } else {
-                        Text("Free Dictionary API")
+                        Text(entry.sourceName)
                     }
                     if let license = entry.license {
                         Text("·")
