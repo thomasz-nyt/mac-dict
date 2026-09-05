@@ -130,25 +130,26 @@ final class SpeechTextBuilderTests: XCTestCase {
 }
 
 
-@MainActor
 final class RecentQueriesStoreTests: XCTestCase {
-    func testHistoryDeduplicatesCaseInsensitivelyAndFavoritesToggle() {
-        let suite = "RecentQueriesStoreTests-\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let store = RecentQueriesStore(defaults: defaults)
+    func testHistoryDeduplicatesCaseInsensitivelyAndFavoritesToggle() async {
+        await MainActor.run {
+            let suite = "RecentQueriesStoreTests-\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suite)!
+            defer { defaults.removePersistentDomain(forName: suite) }
+            let store = RecentQueriesStore(defaults: defaults)
 
-        store.record("Hello")
-        store.record("world")
-        store.record("hello")
-        XCTAssertEqual(store.history, ["hello", "world"])
+            store.record("Hello")
+            store.record("world")
+            store.record("hello")
+            XCTAssertEqual(store.history, ["hello", "world"])
 
-        store.toggleFavorite("hello")
-        XCTAssertTrue(store.isFavorite("HELLO"))
-        store.toggleFavorite("Hello")
-        XCTAssertFalse(store.isFavorite("hello"))
+            store.toggleFavorite("hello")
+            XCTAssertTrue(store.isFavorite("HELLO"))
+            store.toggleFavorite("Hello")
+            XCTAssertFalse(store.isFavorite("hello"))
 
-        store.clearHistory()
-        XCTAssertTrue(store.history.isEmpty)
+            store.clearHistory()
+            XCTAssertTrue(store.history.isEmpty)
+        }
     }
 }
