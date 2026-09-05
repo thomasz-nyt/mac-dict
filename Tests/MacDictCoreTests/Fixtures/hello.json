@@ -1,0 +1,32 @@
+[
+  {
+    "word": "hello",
+    "phonetic": "/həˈləʊ/",
+    "phonetics": [
+      {
+        "text": "/həˈloʊ/",
+        "audio": "//api.dictionaryapi.dev/media/pronunciations/en/hello-us.mp3"
+      }
+    ],
+    "meanings": [
+      {
+        "partOfSpeech": "interjection",
+        "definitions": [
+          {
+            "definition": "A greeting used when meeting someone.",
+            "example": "Hello, everyone.",
+            "synonyms": ["hi"],
+            "antonyms": ["goodbye"]
+          }
+        ],
+        "synonyms": ["greeting"],
+        "antonyms": []
+      }
+    ],
+    "license": {
+      "name": "CC BY-SA 3.0",
+      "url": "https://creativecommons.org/licenses/by-sa/3.0"
+    },
+    "sourceUrls": ["https://en.wiktionary.org/wiki/hello"]
+  }
+]
