@@ -418,7 +418,7 @@ public actor ECDICTStore {
 
     public func suggestions(for rawPrefix: String, limit: Int = 8) -> [String] {
         guard isInstalled,
-              let prefix = QueryNormalizer.normalize(rawPrefix)?.lowercased(),
+              let prefix = QueryNormalizer.normalize(rawPrefix),
               !prefix.contains(" ") else {
             return []
         }
