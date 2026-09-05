@@ -400,7 +400,7 @@ public actor ECDICTStore {
         }
         defer { sqlite3_finalize(statement) }
 
-        query.withCString { pointer in
+        _ = query.withCString { pointer in
             sqlite3_bind_text(statement, 1, pointer, -1, sqliteTransient)
         }
         guard sqlite3_step(statement) == SQLITE_ROW else { return nil }
@@ -449,7 +449,7 @@ public actor ECDICTStore {
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "%", with: "\\%")
             .replacingOccurrences(of: "_", with: "\\_") + "%"
-        escaped.withCString { pointer in
+        _ = escaped.withCString { pointer in
             sqlite3_bind_text(statement, 1, pointer, -1, sqliteTransient)
         }
         sqlite3_bind_int(statement, 2, Int32(max(1, min(limit, 20))))
