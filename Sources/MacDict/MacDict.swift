@@ -657,27 +657,46 @@ struct ResultView: View {
         VStack(alignment: .leading, spacing: 18) {
             Label("English explanation", systemImage: "text.book.closed")
                 .font(.headline)
-            ForEach(Array(entry.meanings.enumerated()), id: \.offset) { _, meaning in
-                VStack(alignment: .leading, spacing: 10) {
+
+            ForEach(Array(entry.meanings.enumerated()), id: \.offset) { meaningIndex, meaning in
+                if meaningIndex > 0 {
+                    Divider()
+                }
+                VStack(alignment: .leading, spacing: 12) {
                     Text(meaning.partOfSpeech.uppercased())
                         .font(.caption.weight(.bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
+
                     ForEach(Array(meaning.definitions.enumerated()), id: \.offset) { index, definition in
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("\(index + 1). \(definition.text)")
-                                .textSelection(.enabled)
-                            if let example = definition.example {
-                                Text("“\(example)”")
-                                    .italic()
-                                    .foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 10) {
+                            Text("\(index + 1)")
+                                .font(.caption.monospacedDigit().weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 20, alignment: .trailing)
+                                .padding(.top, 3)
+
+                            VStack(alignment: .leading, spacing: 7) {
+                                Text(definition.text)
+                                    .font(.body)
+                                    .lineSpacing(4)
+                                    .fixedSize(horizontal: false, vertical: true)
                                     .textSelection(.enabled)
-                            }
-                            if !definition.synonyms.isEmpty {
-                                Text("Synonyms: \(definition.synonyms.prefix(6).joined(separator: ", "))")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                    .textSelection(.enabled)
+
+                                if let example = definition.example {
+                                    Text("“\(example)”")
+                                        .font(.callout)
+                                        .italic()
+                                        .lineSpacing(3)
+                                        .foregroundStyle(.secondary)
+                                        .textSelection(.enabled)
+                                }
+                                if !definition.synonyms.isEmpty {
+                                    Text("Synonyms: \(definition.synonyms.prefix(6).joined(separator: ", "))")
+                                        .font(.callout)
+                                        .foregroundStyle(.secondary)
+                                        .textSelection(.enabled)
+                                }
                             }
                         }
                     }
