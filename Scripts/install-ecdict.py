@@ -84,7 +84,6 @@ def install(source: Path, destination: Path) -> None:
             ) WITHOUT ROWID
             """
         )
-        connection.execute("CREATE INDEX forms_headword ON forms(headword)")
         connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
 
         entries: list[tuple[str, str, str, str, int | None]] = []
