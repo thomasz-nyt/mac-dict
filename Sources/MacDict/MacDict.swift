@@ -233,6 +233,7 @@ final class AppModel: ObservableObject {
     let speech: SpeechService
 
     private let coordinator: LookupCoordinator
+    private let cache: DictionaryCache
     private let ecdict: ECDICTStore
     private var lookupTask: Task<Void, Never>?
     private var suggestionTask: Task<Void, Never>?
@@ -240,18 +241,34 @@ final class AppModel: ObservableObject {
 
     private init() {
         let ecdict = ECDICTStore()
+        let cache = DictionaryCache()
         self.ecdict = ecdict
-        self.coordinator = LookupCoordinator(ecdict: ecdict)
+        self.cache = cache
+        self.coordinator = LookupCoordinator(cache: cache, ecdict: ecdict)
         self.recentQueries = RecentQueriesStore()
         self.speech = SpeechService()
         refreshECDICTStatus()
     }
 
     func prepareTypedSearch() {
+        lookupTask?.cancel()
         query = ""
+        result = nil
         suggestions = []
         errorMessage = nil
+        isLoading = false
         focusSearchRequest += 1
+    }
+
+    func searchTextDidChange() {
+        if let displayedQuery = result?.query,
+           displayedQuery.caseInsensitiveCompare(query) != .orderedSame {
+            lookupTask?.cancel()
+            result = nil
+            errorMessage = nil
+            isLoading = false
+        }
+        scheduleSuggestions()
     }
 
     func lookup(_ rawQuery: String) {
@@ -259,22 +276,28 @@ final class AppModel: ObservableObject {
             errorMessage = "Enter one English word or a short phrase."
             return
         }
+
+        lookupTask?.cancel()
+        result = nil
         query = normalized
         suggestions = []
         recentQueries.record(normalized)
         errorMessage = nil
         isLoading = true
 
-        lookupTask?.cancel()
         let requestID = UUID()
         lookupID = requestID
         lookupTask = Task { [weak self] in
             guard let self else { return }
+            defer {
+                if requestID == lookupID {
+                    isLoading = false
+                }
+            }
+
             if let cached = await coordinator.cachedResult(for: normalized), !Task.isCancelled {
                 guard requestID == lookupID else { return }
                 result = cached
-            } else {
-                result = nil
             }
 
             do {
@@ -289,9 +312,6 @@ final class AppModel: ObservableObject {
             } catch {
                 guard requestID == lookupID else { return }
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            }
-            if requestID == lookupID {
-                isLoading = false
             }
         }
     }
@@ -348,6 +368,7 @@ final class AppModel: ObservableObject {
 
     func stopSpeechAndCancelLookup() {
         lookupTask?.cancel()
+        isLoading = false
         speech.stop()
     }
 
@@ -360,28 +381,6 @@ final class AppModel: ObservableObject {
 
     func clearEnglishCache() {
         Task { [cache] in
-            try? await cache.removeAll()
-        }
-    }
-}
-        let cache = DictionaryCache()
-            try? await cache.removeAll()
-        }
-    }
-}
-}
-
-    func refreshECDICTStatus() {
-        Task { [weak self] in
-            guard let self else { return }
-            isECDICTInstalled = await ecdict.isInstalled
-        }
-    }
-
-    func clearEnglishCache() {
-        Task { [coordinator] in
-            _ = coordinator
-            let cache = DictionaryCache()
             try? await cache.removeAll()
         }
     }
