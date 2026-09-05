@@ -20,7 +20,8 @@ let package = Package(
         ),
         .target(
             name: "MacDictCore",
-            dependencies: ["CSQLite"]
+            dependencies: ["CSQLite"],
+            resources: [.process("PrivacyInfo.xcprivacy")]
         ),
         .executableTarget(
             name: "MacDict",
