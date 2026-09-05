@@ -2,9 +2,15 @@
 
 MacDict keeps dictionary sources visually and technically separate.
 
+## macOS Dictionary Services
+
+MacDict first calls Apple's public `DCSCopyTextDefinition` API. It searches dictionaries enabled by the user in the macOS Dictionary app, remains on-device, and does not redistribute their dictionary data.
+
+- Apple API: https://developer.apple.com/documentation/coreservices/1446842-dcscopytextdefinition
+
 ## Free Dictionary API
 
-English entries are requested from [dictionaryapi.dev](https://dictionaryapi.dev/). The service currently derives English entries from Wiktionary and returns entry-level license and source URL fields. Wiktionary text is generally available under CC BY-SA 3.0 and GFDL; individual pronunciation recordings can carry separate licenses returned with the API response.
+When the active macOS dictionaries have no result, English entries are requested from [dictionaryapi.dev](https://dictionaryapi.dev/). The service currently derives English entries from Wiktionary and returns entry-level license and source URL fields. Wiktionary text is generally available under CC BY-SA 3.0 and GFDL; individual pronunciation recordings can carry separate licenses returned with the API response.
 
 MacDict preserves source URLs and license metadata in its cache and presents source attribution in the result view. The API server implementation is GPL-3.0; MacDict calls the public service and does not incorporate its server source code.
 
