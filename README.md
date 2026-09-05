@@ -1,6 +1,6 @@
 # MacDict
 
-A keyboard-first English dictionary for macOS. English definitions and examples are primary; a compact local ECDICT translation provides a Chinese hint. Every result can be read aloud with separate English and Mandarin voices.
+A keyboard-first English dictionary for macOS. Apple's installed dictionaries provide immediate offline English explanations, Free Dictionary API is the fallback, and a compact local ECDICT translation provides a Chinese hint. Every result can be read aloud with separate English and Mandarin voices.
 
 ## Status
 
@@ -10,7 +10,7 @@ This repository contains the first functional MVP for macOS 14+ on Apple Silicon
 
 - Look up selected text from another app with Control–Option–D.
 - Open a focused search panel with Control–Option–Space.
-- English definitions, examples, phonetics, attribution, and per-entry licensing from Free Dictionary API.
+- Immediate offline English explanations from the dictionaries enabled in macOS Dictionary, with Free Dictionary API as a network fallback.
 - Optional local ECDICT Chinese hints and inflection lookup.
 - Speak the headword, selected English definition, Chinese hint, or full entry.
 - Local favorites, history, and cached English results.
@@ -49,7 +49,7 @@ The installer downloads a pinned 65.9 MB CSV, verifies its SHA-256 checksum, and
 ~/Library/Application Support/MacDict/ecdict.sqlite3
 ```
 
-MacDict detects the database on the next lookup. The downloadable app is only a few hundred kilobytes because it uses macOS system frameworks, retrieves uncached English entries online, and does not bundle this optional database. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing dictionary data.
+MacDict detects the database on the next lookup. The downloadable app is only a few hundred kilobytes because it uses macOS system frameworks and installed dictionaries, and does not bundle this optional database. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing dictionary data.
 
 ## Accessibility permission
 
@@ -66,7 +66,7 @@ Ad-hoc development builds can lose Accessibility permission after the binary cha
 
 ## Privacy
 
-Only a submitted, uncached English query is sent to `api.dictionaryapi.dev`. The selected surrounding document, typing events, history, favorites, and Chinese dictionary stay on the Mac. History can be cleared from Settings.
+A query is sent to `api.dictionaryapi.dev` only when it is not cached and the active macOS dictionaries return no definition. The selected surrounding document, typing events, history, favorites, system-dictionary result, and Chinese dictionary stay on the Mac. History can be cleared from Settings.
 
 ## Verification
 
