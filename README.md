@@ -75,7 +75,7 @@ swift test
 Scripts/build-app.sh
 ```
 
-GitHub Actions runs the same checks on macOS. This Linux workspace cannot compile AppKit, validate system voices, or exercise the Accessibility permission flow; those checks must pass in macOS CI and on a real Mac.
+Run these checks on macOS before using a build. This Linux workspace cannot compile AppKit, validate system voices, or exercise the Accessibility permission flow; those checks must pass on a Mac before the MVP is considered verified. A macOS workflow is prepared locally but cannot be committed until the GitHub connection is allowed to modify workflow files.
 
 ## Known MVP limits
 
