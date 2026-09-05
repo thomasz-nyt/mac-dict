@@ -131,6 +131,22 @@ final class SpeechTextBuilderTests: XCTestCase {
 }
 
 
+final class SystemDictionaryParserTests: XCTestCase {
+    func testSplitsHeadwordPartsOfSpeechSensesAndOrigin() {
+        let raw = """
+        holiday | ˈhäləˌdā | noun 1 a day of festivity or recreation when no work is done. • (holidays) chiefly British an extended period of leisure. verb spend a holiday in a specified place. ORIGIN Old English hāligdæg.
+        """
+
+        let parsed = SystemDictionaryParser.parse(raw, query: "holiday")
+
+        XCTAssertEqual(parsed.phonetic, "ˈhäləˌdā")
+        XCTAssertEqual(parsed.meanings.map(\.partOfSpeech), ["noun", "verb", "origin"])
+        XCTAssertEqual(parsed.meanings[0].definitions.count, 2)
+        XCTAssertTrue(parsed.meanings[0].definitions[0].text.hasPrefix("a day of festivity"))
+        XCTAssertTrue(parsed.meanings[1].definitions[0].text.hasPrefix("spend a holiday"))
+    }
+}
+
 final class RecentQueriesStoreTests: XCTestCase {
     func testHistoryDeduplicatesCaseInsensitivelyAndFavoritesToggle() async {
         await MainActor.run {
