@@ -465,7 +465,8 @@ public actor ECDICTStore {
 
     private func string(from statement: OpaquePointer, column: Int32) -> String? {
         guard let pointer = sqlite3_column_text(statement, column) else { return nil }
-        return String(cString: pointer)
+        let characters = UnsafeRawPointer(pointer).assumingMemoryBound(to: CChar.self)
+        return String(cString: characters)
     }
 }
 
