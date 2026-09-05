@@ -109,7 +109,10 @@ struct SelectedTextReader {
             return .unavailable
         }
 
-        let focusedElement = focusedElementValue as! AXUIElement
+        guard CFGetTypeID(focusedElementValue) == AXUIElementGetTypeID() else {
+            return .unavailable
+        }
+        let focusedElement = unsafeBitCast(focusedElementValue, to: AXUIElement.self)
         var selectedTextValue: AnyObject?
         let textError = AXUIElementCopyAttributeValue(
             focusedElement,
@@ -298,6 +301,9 @@ final class AppModel: ObservableObject {
             if let cached = await coordinator.cachedResult(for: normalized), !Task.isCancelled {
                 guard requestID == lookupID else { return }
                 result = cached
+                if cached.english != nil {
+                    return
+                }
             }
 
             do {
