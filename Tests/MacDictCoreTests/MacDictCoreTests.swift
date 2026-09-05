@@ -37,6 +37,7 @@ final class DictionaryAPIClientTests: XCTestCase {
         XCTAssertEqual(entry.firstDefinition?.example, "Hello, everyone.")
         XCTAssertEqual(entry.license?.name, "CC BY-SA 3.0")
         XCTAssertEqual(entry.sourceURLs.first?.host, "en.wiktionary.org")
+        XCTAssertEqual(entry.sourceName, "Free Dictionary API")
     }
 
     func testRejectsResponseWithoutDefinitions() {
