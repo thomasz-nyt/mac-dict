@@ -16,6 +16,12 @@ swift build --package-path "$ROOT" -c "$CONFIGURATION" --arch "$ARCHITECTURE"
 cp "$BIN_DIR/MacDict" "$APP_DIR/Contents/MacOS/MacDict"
 cp "$ROOT/Info.plist" "$APP_DIR/Contents/Info.plist"
 
+shopt -s nullglob
+for resource_bundle in "$BIN_DIR"/*.bundle; do
+    cp -R "$resource_bundle" "$APP_DIR/Contents/Resources/"
+done
+shopt -u nullglob
+
 codesign --force --deep --sign - "$APP_DIR"
 
 echo "Built $APP_DIR"
