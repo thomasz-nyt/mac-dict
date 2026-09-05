@@ -153,6 +153,132 @@ public enum DictionaryAPIError: LocalizedError, Equatable {
     }
 }
 
+public struct SystemDictionaryParseResult: Equatable, Sendable {
+    public let phonetic: String?
+    public let meanings: [DictionaryMeaning]
+
+    public init(phonetic: String?, meanings: [DictionaryMeaning]) {
+        self.phonetic = phonetic
+        self.meanings = meanings
+    }
+}
+
+public enum SystemDictionaryParser {
+    private static let partsOfSpeech = [
+        "auxiliary verb", "combining form", "modal verb", "interjection",
+        "preposition", "conjunction", "determiner", "exclamation",
+        "adjective", "pronoun", "adverb", "prefix", "suffix",
+        "phrase", "noun", "verb", "origin"
+    ]
+
+    public static func parse(_ rawValue: String, query: String) -> SystemDictionaryParseResult {
+        var prepared = "\n" + rawValue
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "•", with: "\n• ")
+            .replacingOccurrences(of: "▪", with: "\n• ")
+
+        let labelPattern = partsOfSpeech
+            .map { NSRegularExpression.escapedPattern(for: $0) }
+            .joined(separator: "|")
+        prepared = prepared.replacingOccurrences(
+            of: "(?i)(\\||\\n|;|\\.)\\s*(" + labelPattern + ")\\b",
+            with: "$1\n$2\n",
+            options: .regularExpression
+        )
+        prepared = prepared.replacingOccurrences(
+            of: #"(?m)(^|\n)\s*([1-9]|1[0-9])[.)]?\s+(?=[A-Za-z“\"])"#,
+            with: "$1\n§$2§ ",
+            options: .regularExpression
+        )
+
+        var phonetic: String?
+        var currentPart = "meaning"
+        var sections: [(part: String, definitions: [DictionaryDefinition])] = []
+
+        func append(_ definition: DictionaryDefinition) {
+            if let index = sections.indices.last,
+               sections[index].part.caseInsensitiveCompare(currentPart) == .orderedSame {
+                sections[index].definitions.append(definition)
+            } else {
+                sections.append((currentPart, [definition]))
+            }
+        }
+
+        func attachExample(_ example: String) -> Bool {
+            guard let sectionIndex = sections.indices.last,
+                  let definitionIndex = sections[sectionIndex].definitions.indices.last else {
+                return false
+            }
+            let definition = sections[sectionIndex].definitions[definitionIndex]
+            sections[sectionIndex].definitions[definitionIndex] = DictionaryDefinition(
+                text: definition.text,
+                example: example,
+                synonyms: definition.synonyms,
+                antonyms: definition.antonyms
+            )
+            return true
+        }
+
+        for rawLine in prepared.components(separatedBy: .newlines) {
+            var line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !line.isEmpty else { continue }
+
+            if line.contains("|") {
+                let fields = line.split(separator: "|", omittingEmptySubsequences: false)
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                if fields.first?.caseInsensitiveCompare(query) == .orderedSame,
+                   fields.count > 1,
+                   !fields[1].isEmpty {
+                    phonetic = fields[1]
+                    continue
+                }
+            }
+
+            let normalizedLabel = line.lowercased(with: Locale(identifier: "en_US_POSIX"))
+            if partsOfSpeech.contains(normalizedLabel) {
+                currentPart = normalizedLabel
+                continue
+            }
+
+            if line.hasPrefix("•") {
+                line = String(line.dropFirst()).trimmingCharacters(in: .whitespaces)
+            }
+            if line.hasPrefix("§"), let closing = line.dropFirst().firstIndex(of: "§") {
+                line = String(line[line.index(after: closing)...])
+                    .trimmingCharacters(in: .whitespaces)
+            }
+            guard !line.isEmpty else { continue }
+
+            if line.hasPrefix("“") || line.hasPrefix("\"") {
+                let example = line.trimmingCharacters(in: CharacterSet(charactersIn: "“”\""))
+                if attachExample(example) {
+                    continue
+                }
+            }
+
+            append(
+                DictionaryDefinition(
+                    text: line,
+                    example: nil,
+                    synonyms: [],
+                    antonyms: []
+                )
+            )
+        }
+
+        let meanings = sections.map {
+            DictionaryMeaning(
+                partOfSpeech: $0.part,
+                definitions: $0.definitions,
+                synonyms: [],
+                antonyms: []
+            )
+        }
+        return SystemDictionaryParseResult(phonetic: phonetic, meanings: meanings)
+    }
+}
+
 public struct SystemDictionaryClient: Sendable {
     public init() {}
 
@@ -167,20 +293,18 @@ public struct SystemDictionaryClient: Sendable {
         guard let copiedDefinition = DCSCopyTextDefinition(nil, term, range) else {
             return nil
         }
-        let definition = (copiedDefinition.takeRetainedValue() as String)
+        let rawDefinition = (copiedDefinition.takeRetainedValue() as String)
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !definition.isEmpty else { return nil }
+        guard !rawDefinition.isEmpty else { return nil }
 
-        return DictionaryEntry(
-            word: query,
-            phonetic: nil,
-            audioURL: nil,
-            meanings: [
+        let parsed = SystemDictionaryParser.parse(rawDefinition, query: query)
+        let meanings = parsed.meanings.isEmpty
+            ? [
                 DictionaryMeaning(
-                    partOfSpeech: "system dictionary",
+                    partOfSpeech: "meaning",
                     definitions: [
                         DictionaryDefinition(
-                            text: definition,
+                            text: rawDefinition,
                             example: nil,
                             synonyms: [],
                             antonyms: []
@@ -189,7 +313,14 @@ public struct SystemDictionaryClient: Sendable {
                     synonyms: [],
                     antonyms: []
                 )
-            ],
+            ]
+            : parsed.meanings
+
+        return DictionaryEntry(
+            word: query,
+            phonetic: parsed.phonetic,
+            audioURL: nil,
+            meanings: meanings,
             sourceURLs: [],
             license: nil,
             sourceName: "macOS Dictionary"
