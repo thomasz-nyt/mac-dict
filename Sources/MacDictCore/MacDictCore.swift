@@ -1,5 +1,6 @@
 import CSQLite
 import Combine
+import CoreServices
 import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -55,6 +56,7 @@ public struct DictionaryEntry: Codable, Equatable, Sendable {
     public let meanings: [DictionaryMeaning]
     public let sourceURLs: [URL]
     public let license: SourceLicense?
+    public let sourceName: String
 
     public init(
         word: String,
@@ -62,7 +64,8 @@ public struct DictionaryEntry: Codable, Equatable, Sendable {
         audioURL: URL?,
         meanings: [DictionaryMeaning],
         sourceURLs: [URL],
-        license: SourceLicense?
+        license: SourceLicense?,
+        sourceName: String = "Free Dictionary API"
     ) {
         self.word = word
         self.phonetic = phonetic
@@ -70,6 +73,7 @@ public struct DictionaryEntry: Codable, Equatable, Sendable {
         self.meanings = meanings
         self.sourceURLs = sourceURLs
         self.license = license
+        self.sourceName = sourceName
     }
 
     public var firstDefinition: DictionaryDefinition? {
@@ -146,6 +150,50 @@ public enum DictionaryAPIError: LocalizedError, Equatable {
         case .emptyEntry:
             return "The dictionary entry did not contain a definition."
         }
+    }
+}
+
+public struct SystemDictionaryClient: Sendable {
+    public init() {}
+
+    public func lookup(_ rawQuery: String) -> DictionaryEntry? {
+        guard let query = QueryNormalizer.normalize(rawQuery),
+              !query.contains("\n") else {
+            return nil
+        }
+
+        let term = query as CFString
+        let range = CFRange(location: 0, length: CFStringGetLength(term))
+        guard let copiedDefinition = DCSCopyTextDefinition(nil, term, range) else {
+            return nil
+        }
+        let definition = (copiedDefinition.takeRetainedValue() as String)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !definition.isEmpty else { return nil }
+
+        return DictionaryEntry(
+            word: query,
+            phonetic: nil,
+            audioURL: nil,
+            meanings: [
+                DictionaryMeaning(
+                    partOfSpeech: "system dictionary",
+                    definitions: [
+                        DictionaryDefinition(
+                            text: definition,
+                            example: nil,
+                            synonyms: [],
+                            antonyms: []
+                        )
+                    ],
+                    synonyms: [],
+                    antonyms: []
+                )
+            ],
+            sourceURLs: [],
+            license: nil,
+            sourceName: "macOS Dictionary"
+        )
     }
 }
 
@@ -371,7 +419,7 @@ public actor ECDICTStore {
 
     public func lookup(_ rawQuery: String) -> ChineseHint? {
         guard isInstalled,
-              let query = QueryNormalizer.normalize(rawQuery)?.lowercased() else {
+              let query = QueryNormalizer.normalize(rawQuery) else {
             return nil
         }
 
@@ -511,15 +559,18 @@ public enum SpeechTextBuilder {
 
 
 public actor LookupCoordinator {
+    private let systemDictionary: SystemDictionaryClient
     private let api: DictionaryAPIClient
     private let cache: DictionaryCache
     private let ecdict: ECDICTStore
 
     public init(
+        systemDictionary: SystemDictionaryClient = SystemDictionaryClient(),
         api: DictionaryAPIClient = DictionaryAPIClient(),
         cache: DictionaryCache = DictionaryCache(),
         ecdict: ECDICTStore = ECDICTStore()
     ) {
+        self.systemDictionary = systemDictionary
         self.api = api
         self.cache = cache
         self.ecdict = ecdict
@@ -544,6 +595,9 @@ public actor LookupCoordinator {
         async let chinese = ecdict.lookup(query)
         if let cached = await cachedEnglish {
             return LookupResult(query: query, english: cached, chinese: await chinese)
+        }
+        if let local = systemDictionary.lookup(query) {
+            return LookupResult(query: query, english: local, chinese: await chinese)
         }
 
         async let english = api.lookup(query)
