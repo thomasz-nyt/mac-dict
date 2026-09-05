@@ -831,11 +831,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
         registerHotKeys()
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.model.prepareTypedSearch()
-            self.panelController.show(focusSearch: true)
-        }
+        model.prepareTypedSearch()
+        panelController.show(focusSearch: true)
     }
 
     private func setupMenuBar() {
