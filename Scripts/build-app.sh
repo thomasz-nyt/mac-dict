@@ -22,6 +22,11 @@ for resource_bundle in "$BIN_DIR"/*.bundle; do
 done
 shopt -u nullglob
 
+if otool -L "$APP_DIR/Contents/MacOS/MacDict" | grep -E '/(opt/homebrew|usr/local)/'; then
+    echo "Refusing to package a binary linked to a local package-manager library." >&2
+    exit 1
+fi
+
 codesign --force --deep --sign - "$APP_DIR"
 
 echo "Built $APP_DIR"
