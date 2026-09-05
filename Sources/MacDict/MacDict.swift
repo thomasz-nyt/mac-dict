@@ -193,29 +193,27 @@ final class SpeechService: NSObject, ObservableObject, AVSpeechSynthesizerDelega
             ?? AVSpeechSynthesisVoice(language: language)
     }
 
-    nonisolated func speechSynthesizer(
+    func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didStart utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor in isSpeaking = true }
+        isSpeaking = true
     }
 
-    nonisolated func speechSynthesizer(
+    func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didFinish utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor in
-            if !synthesizer.isSpeaking {
-                isSpeaking = false
-            }
+        if !synthesizer.isSpeaking {
+            isSpeaking = false
         }
     }
 
-    nonisolated func speechSynthesizer(
+    func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didCancel utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor in isSpeaking = false }
+        isSpeaking = false
     }
 }
 
