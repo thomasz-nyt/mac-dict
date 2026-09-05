@@ -26,7 +26,7 @@ final class HotKeyManager {
     @discardableResult
     func register(keyCode: UInt32, modifiers: UInt32, handler: @escaping () -> Void) -> Bool {
         unregister()
-        var hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
+        let hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
         let status = RegisterEventHotKey(
             keyCode,
             modifiers,
@@ -196,27 +196,31 @@ final class SpeechService: NSObject, ObservableObject, AVSpeechSynthesizerDelega
             ?? AVSpeechSynthesisVoice(language: language)
     }
 
-    func speechSynthesizer(
+    nonisolated func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didStart utterance: AVSpeechUtterance
     ) {
-        isSpeaking = true
-    }
-
-    func speechSynthesizer(
-        _ synthesizer: AVSpeechSynthesizer,
-        didFinish utterance: AVSpeechUtterance
-    ) {
-        if !synthesizer.isSpeaking {
-            isSpeaking = false
+        Task { @MainActor [weak self] in
+            self?.isSpeaking = true
         }
     }
 
-    func speechSynthesizer(
+    nonisolated func speechSynthesizer(
+        _ synthesizer: AVSpeechSynthesizer,
+        didFinish utterance: AVSpeechUtterance
+    ) {
+        Task { @MainActor [weak self] in
+            self?.isSpeaking = false
+        }
+    }
+
+    nonisolated func speechSynthesizer(
         _ synthesizer: AVSpeechSynthesizer,
         didCancel utterance: AVSpeechUtterance
     ) {
-        isSpeaking = false
+        Task { @MainActor [weak self] in
+            self?.isSpeaking = false
+        }
     }
 }
 
@@ -952,21 +956,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
+@MainActor
 struct MacDictApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    private let model = AppModel.shared
 
     var body: some Scene {
         Settings {
-            SettingsView(model: AppModel.shared)
-                .frame(width: 520, height: 430)
-        }
-    }
-}
-elegate.self) private var appDelegate
-
-    var body: some Scene {
-        Settings {
-            SettingsView(model: AppModel.shared)
+            SettingsView(model: model)
                 .frame(width: 520, height: 430)
         }
     }
